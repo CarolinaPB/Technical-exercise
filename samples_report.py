@@ -1,16 +1,19 @@
-import optparse
+import argparse
 import pandas as pd
 import warnings
 
 # Command line arguments
-parser = optparse.OptionParser()
-parser.add_option("-f", "--file", dest="filename", help="input file", metavar="FILE")
-parser.add_option("-p", "--pct_failed", dest = "pct_failed", help = "lower limit pct failed samples")
 
-(options, args) = parser.parse_args()
+parser = argparse.ArgumentParser(description="Create simple report of samples that failed QC")
+parser.add_argument("-f", "--filename", help="Specify a file name", required=True)
+parser.add_argument("-p", "--pct_failed", type=int, default=10, help="Lower limit pct failed samples. Specify a number (default: 10)", required=True)
+args = parser.parse_args()
+# create command line arguments with argparse
+
+args = parser.parse_args()
 
 # read input file
-df = pd.read_csv(options.filename, sep=',')
+df = pd.read_csv(args.filename, sep=',')
 
 # extract second letter of "sample" column
 df['origin'] = df.iloc[:,0].apply(lambda x: x[1])
@@ -28,9 +31,12 @@ table_totals = pd.merge(fail_qc, total_samples_origin, left_index=True, right_in
 table_totals["pct"] = table_totals["n_fail_qc"] / table_totals["n_total_samples"] * 100
 
 # Raise warning if pct > user defined limit
-fail_val = float(options.pct_failed)
+fail_val = float(args.pct_failed)
 if any(table_totals["pct"] > fail_val):
-    failed_origins = table_totals.query(f"pct >{fail_val}").index
-    fail_origins_str = ', '.join(map(str, failed_origins))
-    print(table_totals)
+    failed_origins = table_totals.query(f"pct >{fail_val}")
+    failed_origins_idx = failed_origins.index
+    fail_origins_str = ', '.join(map(str, failed_origins_idx))
+    print(failed_origins)
     warnings.warn(f"The following origins have more than {fail_val}% failed samples: {fail_origins_str}")
+
+# alternatively, one could set up sending an email with the results to specified users
