@@ -7,6 +7,7 @@ import warnings
 parser = argparse.ArgumentParser(description="Create simple report of samples that failed QC")
 parser.add_argument("-f", "--filename", help="Specify a file name", required=True)
 parser.add_argument("-p", "--pct_failed", type=int, default=10, help="Lower limit pct failed samples. Specify a number (default: 10)", required=True)
+parser.add_argument("-o", "--outfile", help="Specify an output file name", required=False, default="samples_summary.csv")
 args = parser.parse_args()
 # create command line arguments with argparse
 
@@ -60,6 +61,7 @@ if any(processed_data["pct"] > fail_val):
     failed_origins_idx = failed_origins.index
     fail_origins_str = ', '.join(map(str, failed_origins_idx))
     print(failed_origins)
+    failed_origins.to_csv(args.outfile, sep=',')
     warnings.warn(f"The following origins have more than {fail_val}% failed samples: {fail_origins_str}")
 else:
     print("All samples passed QC")
